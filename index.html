@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b1f2a">
+  <title>Puppet Cube V2 — решатель</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>Puppet Cube V2 <span>решатель</span></h1>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="input" role="tab">Ввод</button>
+    <button class="tab" data-tab="solution" role="tab">Решение</button>
+    <button class="tab" data-tab="sim" role="tab">Симулятор</button>
+    <button class="tab" data-tab="shape" role="tab">Форма куба</button>
+    <button class="tab" data-tab="help" role="tab">Справка</button>
+  </nav>
+
+  <main>
+    <!-- ================================================== INPUT -->
+    <section id="tab-input" class="panel active">
+      <ol class="steps" id="input-steps"></ol>
+      <div id="input-step-body" class="card"></div>
+
+      <div class="input-layout" id="input-work">
+        <div class="net-wrap">
+          <svg id="net" class="net" viewBox="-0.2 -0.2 16.4 12.4" aria-label="Развёртка кубика"></svg>
+        </div>
+        <div class="preview-wrap">
+          <canvas id="input-canvas" class="cube-canvas small"></canvas>
+          <div class="hint">Крутите модель пальцем. Можно нажимать на наклейки и здесь.</div>
+        </div>
+      </div>
+
+      <div class="palette" id="palette"></div>
+
+      <div class="row buttons">
+        <button id="btn-prev-step" class="btn">Назад</button>
+        <button id="btn-next-step" class="btn primary">Далее</button>
+      </div>
+      <div class="row buttons secondary-actions">
+        <button id="btn-fill-solved" class="btn small">Заполнить как собранный</button>
+        <button id="btn-clear" class="btn small">Очистить</button>
+        <button id="btn-example" class="btn small">Пример позиции</button>
+      </div>
+      <div id="input-message" class="message" role="status"></div>
+    </section>
+
+    <!-- ================================================ SOLUTION -->
+    <section id="tab-solution" class="panel">
+      <div id="solution-empty" class="card">
+        Решения пока нет. Введите цвета на вкладке «Ввод» или перемешайте кубик в «Симуляторе».
+      </div>
+      <div id="solution-body" hidden>
+        <div class="player">
+          <canvas id="solution-canvas" class="cube-canvas"></canvas>
+          <div class="current-move">
+            <div class="move-big" id="move-big">—</div>
+            <div class="move-desc" id="move-desc"></div>
+            <div class="move-progress" id="move-progress"></div>
+          </div>
+          <div class="row buttons player-controls">
+            <button id="btn-first" class="btn" title="В начало">⏮</button>
+            <button id="btn-back" class="btn" title="Ход назад">◀</button>
+            <button id="btn-play" class="btn primary" title="Автовоспроизведение">▶ Авто</button>
+            <button id="btn-fwd" class="btn primary" title="Сделать ход">Ход ▶</button>
+            <button id="btn-last" class="btn" title="В конец">⏭</button>
+          </div>
+          <label class="speed">Скорость
+            <input type="range" id="speed" min="150" max="1200" step="50" value="500">
+          </label>
+        </div>
+        <div id="solution-phases" class="phases"></div>
+      </div>
+    </section>
+
+    <!-- ===================================================== SIM -->
+    <section id="tab-sim" class="panel">
+      <canvas id="sim-canvas" class="cube-canvas"></canvas>
+      <div id="sim-status" class="message" role="status"></div>
+      <div class="move-grid" id="sim-moves"></div>
+      <div class="row">
+        <input type="text" id="sim-alg" class="alg-input" placeholder="Формула, например: Rw U Rw' U'" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button id="btn-sim-run" class="btn">Выполнить</button>
+      </div>
+      <div class="row buttons">
+        <button id="btn-sim-undo" class="btn">Отменить ход</button>
+        <button id="btn-sim-reset" class="btn">Собрать</button>
+        <button id="btn-sim-scramble" class="btn">Перемешать</button>
+        <button id="btn-sim-solve" class="btn primary">Решить эту позицию</button>
+      </div>
+      <div class="hint">Ходы, которые настоящая головоломка не даст сделать (детали упрутся), модель тоже не выполнит.</div>
+    </section>
+
+    <!-- =================================================== SHAPE -->
+    <section id="tab-shape" class="panel">
+      <div class="card">
+        <p><b>Сначала верните кубику форму куба.</b> Ввести можно только кубик в форме куба: без выступов, все грани ровные.</p>
+        <ol>
+          <li>Найдите <b>главный блок</b> — цельный кубик 2×2×2 с тремя гладкими гранями. Держите его снизу-сзади-слева.</li>
+          <li>Поворачивая правую, верхнюю и переднюю половины (как у кубика 2×2), соберите нижний слой: квадрат 2×2 из четырёх больших частей, включая главный блок.</li>
+          <li>Сверху обычно остаётся одна из типичных фигур. Найдите похожую ниже и выполните её формулу.</li>
+        </ol>
+        <p class="hint">Формулы взяты из гайда SommerCubes и проверены на модели. Фигура на картинке показана в том же положении, в каком нужно держать кубик.</p>
+      </div>
+      <div class="shape-list" id="shape-list"></div>
+      <canvas id="shape-canvas" class="cube-canvas"></canvas>
+      <div class="current-move"><div class="move-big" id="shape-alg">—</div></div>
+      <div class="row buttons">
+        <button id="btn-shape-show" class="btn">Показать фигуру</button>
+        <button id="btn-shape-play" class="btn primary">Проиграть формулу</button>
+      </div>
+    </section>
+
+    <!-- ==================================================== HELP -->
+    <section id="tab-help" class="panel">
+      <div class="card help" id="help-body"></div>
+    </section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/puppet-core.js"></script>
+  <script src="js/solver.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
