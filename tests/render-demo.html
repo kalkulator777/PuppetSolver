@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puppet renderer demo</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d2026; color: #e8e8e8; font: 14px/1.4 system-ui, sans-serif; }
+  #wrap { position: relative; width: 100%; height: 68vh; }
+  #cv { width: 100%; height: 100%; display: block; }
+  .bar { padding: 8px 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  button { background: #343a46; color: #fff; border: 1px solid #4b5262; border-radius: 6px; padding: 6px 10px; font: inherit; }
+  button:active { background: #4b5262; }
+  #log { padding: 4px 12px; font-family: ui-monospace, monospace; font-size: 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv"></canvas></div>
+<div class="bar" id="bar"></div>
+<div id="log"></div>
+<script src="../js/data.js"></script>
+<script src="../js/puppet-core.js"></script>
+<script src="../js/render.js"></script>
+<script>
+  var params = new URLSearchParams(location.search);
+  var r = new PuppetRenderer(document.getElementById('cv'), {
+    background: params.get('bg') || null
+  });
+  window.renderer = r;
+  var state = Puppet.solvedState();
+  var log = document.getElementById('log');
+  function say(s) { log.textContent = s + '\n' + log.textContent.slice(0, 600); }
+
+  function run(alg, duration) {
+    var toks = alg.split(/\s+/).filter(Boolean);
+    var p = Promise.resolve();
+    toks.forEach(function (t) {
+      p = p.then(function () {
+        return r.animateMove(t, { duration: duration }).then(function (s) {
+          if (s) { state = s; say(t + ' ok' + (Puppet.isCube(s) ? ' (cube)' : '')); }
+          else if (s === null) say(t + ' BLOCKED');
+        });
+      });
+    });
+    return p;
+  }
+
+  var buttons = [
+    ['Reset', function () { state = Puppet.solvedState(); r.setState(state); }],
+    ['View', function () { r.resetView(); }],
+    ['Back view', function () { r.setView(145, -30); }],
+    ['M2', function () { run('M2'); }],
+    ['U', function () { run('U'); }],
+    ['Rw', function () { run('Rw'); }],
+    ["Fw' Uw Fw Uw", function () { run("Fw' Uw Fw Uw"); }],
+    ['L', function () { run('L'); }],
+    ["R F' (F' blocked)", function () { run("R F'"); }],
+    ['Highlight', function () { r.setHighlights([{ piece: 0, face: 1 }, { piece: 25, face: 2 }, { piece: 7, face: 2 }]); }],
+    ['No HL', function () { r.setHighlights(null); }],
+    ['Grey input', function () {
+      r.setStickerColorFn(function (p, f) { return (p + f) % 3 ? '#8a8a8a' : null; });
+    }],
+    ['Real colours', function () { r.setStickerColorFn(null); }]
+  ];
+  var bar = document.getElementById('bar');
+  buttons.forEach(function (b) {
+    var el = document.createElement('button');
+    el.textContent = b[0];
+    el.onclick = b[1];
+    bar.appendChild(el);
+  });
+  r.onPick = function (hit) {
+    say('pick: ' + (hit ? Puppet.PIECES[hit.piece].name + ' face ' + Puppet.FACE_NAMES[hit.face] : 'null'));
+    r.setHighlights(hit ? [hit] : null);
+  };
+  window.addEventListener('resize', function () { r.resize(); });
+
+  // URL hooks for automated screenshots: ?alg=U&yaw=..&pitch=..
+  if (params.get('alg')) {
+    var res = Puppet.applyAlg(state, params.get('alg'));
+    state = res.state;
+    r.setState(state);
+    if (res.blockedAt >= 0) say('blocked at ' + res.blockedAt);
+  }
+  if (params.get('yaw') || params.get('pitch')) r.setView(+params.get('yaw') || r.yaw, +(params.get('pitch') || r.pitch));
+  window.run = run;
+  window.getState = function () { return state; };
+</script>
+</body>
+</html>
